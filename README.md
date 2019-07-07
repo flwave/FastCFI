@@ -10,6 +10,8 @@ This repository is the source code of FastCFI. Several parts are included in thi
 
 L. Feng, J. Huang, J. Hu and A. Reddy, "FastCFI: Real-Time Control Flow Integrity using FPGA without Code Instrumentation," International Conference on Runtime Verification, 2019.
 
+A demo video can be found at: https://youtu.be/PIzojt2opvE
+
 Please send your comments to flwave@tamu.edu. We would highly appreciate your comments.
 
 ## CFG Checker Generator
