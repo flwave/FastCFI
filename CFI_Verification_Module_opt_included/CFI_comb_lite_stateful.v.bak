@@ -1,0 +1,460 @@
+module CFI_comb(clk,deh,ded,dec,des,vio,probe);
+	input clk;
+	input[127:0] ded;//data
+	input[15:0] deh;//header
+	input[31:0] dec;//cid
+	input[4:0] des;//state
+	output vio;
+	output reg[127:0] probe;
+	
+	wire[31:0] wd;//data
+	wire[31:0] wc;//cid
+	wire ws;//state 
+	wire[3:0] wh;//header
+	
+	wire read,empty,overflow;
+	wire[127:0] probe_re,probe_ve;
+	
+	//CFI_comb_data_receiver cr0(clk,deh,ded,dec,des,lock,read_c,ready,read_c_max,outd,outc,outs,probe_re);
+	CFI_FIFO cf0(clk,read,des,deh,dec,ded,empty,overflow,ws,wh,wc,wd);
+	CFI_comb_verification cve0(clk,ws,wh,wc,wd,empty,overflow,read,vio,probe_ve);
+	always@(posedge clk)begin
+		probe=probe_ve;
+	end
+	
+endmodule
+
+module CFI_comb_verification(clk,ins,inh,inc,ind,empty,overflow,read,vio,probe);
+	parameter nodes=22;
+	parameter func_bits=8;
+	parameter block_bits=6;
+	parameter stack_size=16;
+	
+	input clk;
+	input[31:0] ind;//data
+	input[31:0] inc;//cid
+	input ins;//state 
+	input[3:0] inh;//header
+	
+	output reg[127:0] probe;
+	
+	input empty,overflow;
+	output reg read;
+	
+	output reg vio;
+	
+	parameter IDLE=8'h00;
+	parameter INIT=8'h01;
+	parameter WORK=8'h02;
+	parameter WAIT_SYNC=8'h03;
+	parameter OVERFLOW=8'h04;
+	parameter READROM=8'h05;
+	parameter LAST=8'h06;
+	
+	reg[7:0] step;
+	reg[7:0] process_c;//count how many cycles after starting working
+	
+	reg[3:0] verify_begin;
+	reg wait_sync;
+	
+	reg[31:0] address;
+	reg[31:0] cid,target_cid;
+	reg state,target_state;
+	
+	reg pass_verify;
+	
+	reg en;
+	reg[31:0] init_addr;
+	reg[31:0] check_addr;
+	reg[1:0] atom;
+	wire[31:0] addr;
+	wire[func_bits+block_bits+32-1:0] addr_aux;
+	wire[4:0] info;
+	
+	wire[127:0] probe_w;
+	
+	reg[3:0] deh_last;
+	reg init_check;
+	
+	
+	reg[63:0] func_stack[stack_size-1:0];
+	reg[31:0] return_stack[stack_size-1:0];
+	reg[31:0] last_2_bend[1:0],last_2_addr[1:0];
+	reg ret_verify,ind_verify;
+	
+	reg[15:0] stack_ptr;
+	
+	
+	//CFI_kernel ck0(clk,init_addr,check_addr,atoms,atomson,re,stateful,probe_w);
+	CFI_kernel ck0(clk,en,init_addr,check_addr,atom,addr,addr_aux,info,probe_w);
+	
+	always@(posedge clk)begin
+		vio=0;
+		read=1;
+		probe=ind|(addr<<32)|(info<<64)|(addr_aux[31:0]<<96)|(inh<<120)|(overflow<<127);
+		
+		
+		if(overflow)begin
+			stack_ptr=0;
+			step=IDLE;
+		end
+		else if(step==IDLE)begin
+			if(inh==2)begin
+				init_addr=ind;
+				check_addr=0;
+				atom=2'b10;
+				
+				en=1;
+				cid=inc;
+				
+				ret_verify=0;
+				ind_verify=0;
+				process_c=0;
+				step=WORK;
+			end
+		end
+		else if(step==WORK||step==LAST)begin
+			if(step==LAST)begin
+				step=IDLE;
+			end
+			//--------------
+			if(step==WORK&&target_cid!=0&&inc>0&&target_cid!=inc)begin
+				target_cid=0;
+				stack_ptr=0;
+				step=LAST;
+			end
+			//--------------data process-----------------
+			if(process_c>=1)begin
+				last_2_bend[1]=last_2_bend[0];
+				last_2_bend[0]=addr_aux[31:0]+addr_aux[block_bits+32-1:32];
+				last_2_addr[1]=last_2_addr[0];
+				last_2_addr[0]=addr;
+				if(info[0]&&process_c>2)begin//if this process begin at a function entry, there is no 'last block end address'.....the reason process_c cannot be 1: 1 is the init part; cannot be 2: 2 is the first one starting work
+					if(stack_ptr==0||(stack_ptr>0&&addr_aux[31:0]!=func_stack[stack_ptr-1][31:0]))begin
+						func_stack[stack_ptr]=((addr_aux[31:0]+addr_aux[func_bits+block_bits+32-1:block_bits+32])<<32)|addr_aux[31:0];
+						if(process_c>1)begin//somewhere jumps into a function, must return to the end_address+4 of that block
+							return_stack[stack_ptr]=last_2_bend[1];
+						end
+						else begin
+							return_stack[stack_ptr]=0;
+						end
+						stack_ptr=stack_ptr+1;
+						if(stack_ptr>stack_size)begin
+							stack_ptr=0;
+						end
+					end
+				end
+				if(info[1]&&process_c>2)begin
+					ret_verify=1;
+				end
+			end
+			//--------------verify-----------------
+			if(process_c==0)begin//no output from kernel
+				
+			end
+			else if(process_c==1)begin//the first output, verify if this is the program we want to check
+				if(info[4])begin
+					if(target_cid==0)begin
+						target_cid=cid;
+					end
+				end
+				else begin
+					step=IDLE;
+				end
+			end
+			else begin//normally working
+				if(!info[4])begin//if this is still in range
+					step=IDLE;
+				end
+				
+				if(info[3])begin
+					vio=1;
+				end
+				
+				if(ind_verify)begin
+					if(info[0]&&last_2_addr[1]==addr_aux[31:0])begin
+					end
+					else if(!info[0]&&(stack_ptr==0||(stack_ptr>0&&last_2_addr[1]>=func_stack[stack_ptr-1][31:0]&&last_2_addr[1]<=func_stack[stack_ptr-1][63:32])))begin
+					end
+					else begin
+						vio=1;
+					end
+					ind_verify=0;
+				end
+				if(ret_verify)begin//verify return addr
+					if(stack_ptr>0)begin
+						if(return_stack[stack_ptr-1]!=0&&addr!=return_stack[stack_ptr-1])begin
+							vio=1;
+						end
+						stack_ptr=stack_ptr-1;
+					end
+					ret_verify=0;
+				end
+				if(info[2]&&!info[0])begin//verify indirect jump(but not return) to origin function or entry of function
+					if(addr==0)begin//this means out of range, we no longer need to verify
+						step=IDLE;
+					end
+					else begin
+						ind_verify=1;
+					end
+				end
+				
+			end
+			if(vio)begin
+				stack_ptr=0;
+				target_cid=0;
+				step=IDLE;
+			end
+			//--------------data feeding-----------------
+			if(step==WORK)begin
+				case(inh)
+				0: begin
+					en=0;
+				end
+				1: begin
+					en=1;
+					if(process_c>0)
+					init_addr=0;
+					check_addr=0;
+					atom=ind[0];
+				end
+				2:begin
+					en=1;
+					if(process_c>0)
+					init_addr=0;
+					check_addr=ind;
+					atom=2'b10;
+				end
+				3:begin
+					en=1;
+					target_cid=0;
+					stack_ptr=0;
+					step=LAST;
+				end
+				4:begin
+					en=1;
+					target_cid=0;
+					stack_ptr=0;
+					step=WAIT_SYNC;
+				end
+				5:begin
+					en=1;
+					step=LAST;
+				end
+				6:begin
+					en=1;
+					step=LAST;
+					stack_ptr=0;
+				end
+				endcase
+			end
+			
+			if(inh>0&&process_c<3)begin
+				process_c=process_c+1;
+			end
+			
+		end
+		else if(step==WAIT_SYNC)begin
+			if(inh==5)begin
+				step=IDLE;
+			end
+		end
+		
+	end
+	
+endmodule
+
+
+module CFI_FIFO_test(clk,empty,overflow,read,outs,outh,outc,outd);
+input clk;
+
+output outs;
+output[3:0] outh;
+output[31:0] outc;
+output[31:0] outd;
+
+
+output reg read/*synthesis noprune*/;
+reg[4:0] ins/*synthesis noprune*/;
+reg[15:0] inh/*synthesis noprune*/;
+reg[31:0] inc/*synthesis noprune*/;
+reg[127:0] ind/*synthesis noprune*/;
+
+output empty,overflow;
+
+CFI_FIFO f1(clk,read,ins,inh,inc,ind,empty,overflow,outs,outh,outc,outd);
+
+reg[7:0] count;
+
+always@(posedge clk)begin
+	if(count==0)begin
+		read=1;
+		count=count+1;
+	end
+	else if(count==1)begin
+		read=1;
+		count=count+1;
+	end
+	else begin
+		read=1;
+		count=0;
+	end	
+	ins=5'b10101;
+	inh=16'h2121;
+	inc=32'habab;
+	ind=127'h0000abcd0000002c123456780000000a;
+end
+
+endmodule
+
+module CFI_FIFO(clk,read,ins,inh,inc,ind,empty,overflow,outs,outh,outc,outd);
+
+parameter size=64;
+
+input clk;
+
+input[4:0] ins;
+input[15:0] inh;
+input[31:0] inc;
+input[127:0] ind;
+
+input read;
+
+output reg outs;
+output reg[3:0] outh;
+output reg[31:0] outc;
+output reg[31:0] outd;
+
+output reg empty;
+output reg overflow;
+
+reg full;
+reg[32:0] pin,pout;
+reg[7:0] a_c;//atom_count;
+
+reg bufs[size-1:0];
+reg[3:0] bufh[size-1:0];
+reg[31:0] bufc[size-1:0];
+reg[31:0] bufd[size-1:0];
+
+wire[31:0] data[3:0];
+wire[3:0] header[3:0];
+
+assign data[0]=ind[31:0];
+assign data[1]=ind[63:32];
+assign data[2]=ind[95:64];
+assign data[3]=ind[127:96];
+
+assign header[0]=inh[3:0];
+assign header[1]=inh[7:4];
+assign header[2]=inh[11:8];
+assign header[3]=inh[15:12];
+
+reg[3:0] data_c;
+
+reg[7:0] self_rst;
+
+always@(posedge clk)begin
+	if(self_rst==8'h45)begin
+		
+	end
+	else begin
+		a_c=0;
+		pin=0;
+		pout=0;
+		self_rst=8'h45;
+		empty=1;
+		overflow=0;
+		full=0;
+	end
+	
+	
+	if(read&&empty==0)begin
+		if(bufh[pout]==1)begin
+			if(a_c==0||overflow)begin
+				if(bufd[pout][5])
+					a_c=5;
+				else if(bufd[pout][4])
+					a_c=4;
+				else if(bufd[pout][3])
+					a_c=3;
+				else if(bufd[pout][2])
+					a_c=2;
+				else if(bufd[pout][1])
+					a_c=1;
+			end
+			a_c=a_c-1;
+			outs=bufs[pout];
+			outh=bufh[pout];
+			outc=bufc[pout];
+			outd=bufd[pout][a_c];
+			if(a_c==0)begin
+				full=0;
+				pout=pout+1;
+				if(pout>=size)begin
+					pout=0;
+				end
+				if(pout==pin)begin
+					empty=1;
+				end
+				else begin
+					empty=0;
+				end
+			end
+		end
+		else begin
+			outs=bufs[pout];
+			outh=bufh[pout];
+			outc=bufc[pout];
+			outd=bufd[pout];
+			full=0;
+			pout=pout+1;
+			if(pout>=size)begin
+				pout=0;
+			end
+			if(pout==pin)begin
+				empty=1;
+			end
+			else begin
+				empty=0;
+			end
+		end
+	end
+	else begin
+		outs=0;
+		outh=0;
+		outc=0;
+		outd=0;
+	end
+	
+	data_c=0;
+	overflow=0;
+	if(ins[4])begin
+		while(data_c<4)begin
+			if(header[data_c]>0)begin
+				empty=0;
+				if(full)begin
+					overflow=1;
+				end
+				bufs[pin]=ins[data_c];
+				bufh[pin]=header[data_c];
+				bufc[pin]=inc;
+				bufd[pin]=data[data_c];
+				pin=pin+1;
+				if(pin>=size)begin
+					pin=0;
+				end
+				if(pin==pout)begin
+					full=1;
+				end
+				else begin
+					full=0;
+				end
+			end
+			data_c=data_c+1;
+		end
+	end
+	
+end
+
+endmodule

@@ -1,0 +1,8 @@
+_start
+call_weak_fn
+deregister_tm_clones
+register_tm_clones
+__do_global_dtors_aux
+frame_dummy
+__libc_csu_init
+__libc_csu_fini

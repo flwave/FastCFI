@@ -3,7 +3,7 @@
 
 <p align="center">
   <b>Maintained by: Lang Feng, Jeff Huang, Jiang Hu and Abhijith Reddy</b><br>
-  <b>Contact: flwave@tamu.edu, jeffhuang@tamu.edu, jianghu@tamu.edu, abreddy@tamu.edu</b><br>
+  <b>Contact: flang@nju.edu.cn, jeffhuang@tamu.edu, jianghu@tamu.edu, abreddy@tamu.edu</b><br>
 </p>
 
 This repository is the source code of FastCFI. Several parts are included in this repository. More details can be found in the following paper:
@@ -12,7 +12,9 @@ L. Feng, J. Huang, J. Hu and A. Reddy, "FastCFI: Real-Time Control Flow Integrit
 
 A demo video can be found at: https://youtu.be/PIzojt2opvE
 
-Please send your comments to flwave@tamu.edu. We would highly appreciate your comments.
+Please send your comments to flang@nju.edu.cn. We would highly appreciate your comments.
+
+UPDATE 04/07/2021: Added the CFG optimization. The folders with "_opt_included" are the projects with CFG optimization enabled.
 
 ## CFG Checker Generator
 

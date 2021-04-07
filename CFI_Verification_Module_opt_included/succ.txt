@@ -1,0 +1,52 @@
+0: x   ./ripe_attack_generator -t direct -i createfile -c ret  -l stack -f memcpy > /tmp/ripe_log 2>&1
+10:    ./ripe_attack_generator -t direct -i createfile -c baseptr  -l stack -f memcpy > /tmp/ripe_log 2>&1
+20: x   ./ripe_attack_generator -t direct -i createfile -c funcptrstackvar  -l stack -f memcpy > /tmp/ripe_log 2>&1
+30:    ./ripe_attack_generator -t direct -i createfile -c funcptrstackparam  -l stack -f memcpy > /tmp/ripe_log 2>&1
+40: x  ./ripe_attack_generator -t direct -i createfile -c structfuncptrstack  -l stack -f memcpy > /tmp/ripe_log 2>&1
+50: x  ./ripe_attack_generator -t direct -i createfile -c funcptrheap  -l heap -f memcpy > /tmp/ripe_log 2>&1
+60: x  ./ripe_attack_generator -t direct -i createfile -c structfuncptrheap  -l heap -f memcpy > /tmp/ripe_log 2>&1
+70: x  ./ripe_attack_generator -t direct -i createfile -c structfuncptrbss  -l bss -f memcpy > /tmp/ripe_log 2>&1
+80: x  ./ripe_attack_generator -t direct -i createfile -c funcptrdata  -l data -f memcpy > /tmp/ripe_log 2>&1
+90: x  ./ripe_attack_generator -t direct -i createfile -c structfuncptrdata  -l data -f memcpy > /tmp/ripe_log 2>&1
+100:x   ./ripe_attack_generator -t indirect -i createfile -c ret  -l stack -f memcpy > /tmp/ripe_log 2>&1
+110:    ./ripe_attack_generator -t indirect -i createfile -c baseptr  -l stack -f memcpy > /tmp/ripe_log 2>&1
+120:x    ./ripe_attack_generator -t indirect -i createfile -c funcptrstackvar  -l stack -f memcpy > /tmp/ripe_log 2>&1
+130:x    ./ripe_attack_generator -t indirect -i createfile -c funcptrstackparam  -l stack -f memcpy > /tmp/ripe_log 2>&1
+140:x    ./ripe_attack_generator -t indirect -i createfile -c funcptrheap  -l stack -f memcpy > /tmp/ripe_log 2>&1
+150:x    ./ripe_attack_generator -t indirect -i createfile -c funcptrbss  -l stack -f memcpy > /tmp/ripe_log 2>&1
+160: x   ./ripe_attack_generator -t indirect -i createfile -c funcptrdata  -l stack -f memcpy > /tmp/ripe_log 2>&1
+170: x   ./ripe_attack_generator -t indirect -i createfile -c ret  -l heap -f memcpy > /tmp/ripe_log 2>&1
+180:    ./ripe_attack_generator -t indirect -i createfile -c baseptr  -l heap -f memcpy > /tmp/ripe_log 2>&1
+190: x   ./ripe_attack_generator -t indirect -i createfile -c funcptrstackvar  -l heap -f memcpy > /tmp/ripe_log 2>&1
+200: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrstackparam  -l heap -f memcpy > /tmp/ripe_log 2>&1
+210: x   ./ripe_attack_generator -t indirect -i createfile -c funcptrheap  -l heap -f memcpy > /tmp/ripe_log 2>&1
+220: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrbss  -l heap -f memcpy > /tmp/ripe_log 2>&1
+230: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrdata  -l heap -f memcpy > /tmp/ripe_log 2>&1
+240: x  ./ripe_attack_generator -t indirect -i createfile -c ret  -l bss -f memcpy > /tmp/ripe_log 2>&1
+250:    ./ripe_attack_generator -t indirect -i createfile -c baseptr  -l bss -f memcpy > /tmp/ripe_log 2>&1
+260: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrstackvar  -l bss -f memcpy > /tmp/ripe_log 2>&1
+270: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrstackparam  -l bss -f memcpy > /tmp/ripe_log 2>&1
+280: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrheap  -l bss -f memcpy > /tmp/ripe_log 2>&1
+290: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrbss  -l bss -f memcpy > /tmp/ripe_log 2>&1
+300: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrdata  -l bss -f memcpy > /tmp/ripe_log 2>&1
+310: x  ./ripe_attack_generator -t indirect -i createfile -c ret  -l data -f memcpy > /tmp/ripe_log 2>&1
+320:    ./ripe_attack_generator -t indirect -i createfile -c baseptr  -l data -f memcpy > /tmp/ripe_log 2>&1
+330: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrstackvar  -l data -f memcpy > /tmp/ripe_log 2>&1
+340: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrstackparam  -l data -f memcpy > /tmp/ripe_log 2>&1
+350: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrheap  -l data -f memcpy > /tmp/ripe_log 2>&1
+360: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrbss  -l data -f memcpy > /tmp/ripe_log 2>&1
+370: x  ./ripe_attack_generator -t indirect -i createfile -c funcptrdata  -l data -f memcpy > /tmp/ripe_log 2>&1
+380: x  ./ripe_attack_generator -t direct -i returnintolibc -c ret  -l stack -f memcpy > /tmp/ripe_log 2>&1
+390:    ./ripe_attack_generator -t direct -i returnintolibc -c baseptr  -l stack -f memcpy > /tmp/ripe_log 2>&1
+400: x  ./ripe_attack_generator -t direct -i returnintolibc -c funcptrstackvar  -l stack -f memcpy > /tmp/ripe_log 2>&1
+410:    ./ripe_attack_generator -t direct -i returnintolibc -c funcptrstackparam  -l stack -f memcpy > /tmp/ripe_log 2>&1
+420: x  ./ripe_attack_generator -t direct -i returnintolibc -c structfuncptrstack  -l stack -f memcpy > /tmp/ripe_log 2>&1
+430: x  ./ripe_attack_generator -t direct -i returnintolibc -c funcptrheap  -l heap -f memcpy > /tmp/ripe_log 2>&1
+440: x  ./ripe_attack_generator -t direct -i returnintolibc -c structfuncptrheap  -l heap -f memcpy > /tmp/ripe_log 2>&1
+450: x  ./ripe_attack_generator -t direct -i returnintolibc -c structfuncptrbss  -l bss -f memcpy > /tmp/ripe_log 2>&1
+460: x  ./ripe_attack_generator -t direct -i returnintolibc -c funcptrdata  -l data -f memcpy > /tmp/ripe_log 2>&1
+470: x  ./ripe_attack_generator -t direct -i returnintolibc -c structfuncptrdata  -l data -f memcpy > /tmp/ripe_log 2>&1
+480:    ./ripe_attack_generator -t indirect -i returnintolibc -c baseptr  -l stack -f memcpy > /tmp/ripe_log 2>&1
+490:    ./ripe_attack_generator -t indirect -i returnintolibc -c baseptr  -l bss -f memcpy > /tmp/ripe_log 2>&1
+500:    ./ripe_attack_generator -t indirect -i returnintolibc -c baseptr  -l data -f memcpy > /tmp/ripe_log 2>&1
+510: x  ./ripe_attack_generator -t direct -i rop -c ret  -l stack -f memcpy > /tmp/ripe_log 2>&1

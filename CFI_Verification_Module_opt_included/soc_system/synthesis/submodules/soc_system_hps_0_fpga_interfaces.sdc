@@ -1,0 +1,1 @@
+create_clock -period 40.0 [get_pins -compatibility_mode *|fpga_interfaces|tpiu|traceclk]
